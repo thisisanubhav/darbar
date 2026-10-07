@@ -212,13 +212,15 @@ export function Player() {
             type="button"
             aria-label="Seek"
             onPointerDown={seek}
-            className="mt-1.5 block h-1 w-full rounded-full bg-white/20"
+            className="group mt-1 block w-full py-1.5"
           >
-            <span
-              ref={barRef}
-              className="block h-full rounded-full bg-white/90"
-              style={{ width: "0%" }}
-            />
+            <span className="block h-1 w-full rounded-full bg-white/20 transition-[height] group-hover:h-1.5">
+              <span
+                ref={barRef}
+                className="block h-full rounded-full bg-white/90"
+                style={{ width: "0%" }}
+              />
+            </span>
           </button>
           <span
             ref={timeRef}
