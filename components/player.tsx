@@ -24,6 +24,9 @@ export function Player() {
   const barRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLSpanElement>(null);
   const durationRef = useRef(0);
+  // Virtual queue: "pinned" = the opening song sits at position 0;
+  // "playlist" = the named playlist occupies positions 1..N (shuffled).
+  const modeRef = useRef<"pinned" | "playlist">("pinned");
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [track, setTrack] = useState({
@@ -49,6 +52,20 @@ export function Player() {
       id,
     });
     durationRef.current = player.getDuration() || 0;
+  }, []);
+
+  // Hand off from the pinned opener into the shuffled playlist (positions 1..N).
+  const enterPlaylist = useCallback((player: YT.Player) => {
+    modeRef.current = "playlist";
+    player.loadPlaylist({ listType: "playlist", list: site.youtubePlaylistId });
+    player.setShuffle(true);
+    player.setLoop(true);
+  }, []);
+
+  // Return to position 0 — the pinned opening song.
+  const goToPinned = useCallback((player: YT.Player) => {
+    modeRef.current = "pinned";
+    player.loadVideoById(site.firstVideoId);
   }, []);
 
   useEffect(() => {
@@ -78,9 +95,8 @@ export function Player() {
       playerRef.current = new window.YT.Player("yt-player", {
         width: 1,
         height: 1,
+        videoId: site.firstVideoId,
         playerVars: {
-          listType: "playlist",
-          list: site.youtubePlaylistId,
           controls: 0,
           modestbranding: 1,
           rel: 0,
@@ -92,20 +108,27 @@ export function Player() {
         },
         events: {
           onReady: (event) => {
-            event.target.setLoop(true);
-            event.target.setShuffle(true);
+            // Programmatic playback can otherwise start muted in some browsers.
+            event.target.unMute?.();
+            event.target.setVolume?.(100);
             syncTrack(event.target);
             setReady(true);
           },
           onStateChange: (event) => {
             setPlaying(event.data === 1);
+            // Opening track ended on its own → roll into the playlist.
+            if (event.data === 0 && modeRef.current === "pinned") {
+              enterPlaylist(event.target);
+              return;
+            }
             if (event.data === 1 || event.data === 0 || event.data === 5) {
               syncTrack(event.target);
             }
           },
           onError: (event) => {
             try {
-              event.target.nextVideo();
+              if (modeRef.current === "pinned") enterPlaylist(event.target);
+              else event.target.nextVideo();
             } catch {
               /* skip broken tracks */
             }
@@ -124,7 +147,28 @@ export function Player() {
       playerRef.current?.destroy();
       playerRef.current = null;
     };
-  }, [syncTrack]);
+  }, [syncTrack, enterPlaylist]);
+
+  const handleNext = useCallback(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    // From the pinned opener, "next" steps into the playlist at position 1.
+    if (modeRef.current === "pinned") enterPlaylist(player);
+    else player.nextVideo();
+  }, [enterPlaylist]);
+
+  const handlePrev = useCallback(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    if (modeRef.current === "pinned") {
+      player.seekTo(0, true); // already at position 0 — restart it
+      return;
+    }
+    // At the first playlist item, "prev" returns to the pinned opener.
+    const index = player.getPlaylistIndex?.() ?? -1;
+    if (index <= 0) goToPinned(player);
+    else player.previousVideo();
+  }, [goToPinned]);
 
   function seek(event: PointerEvent<HTMLButtonElement>) {
     const player = playerRef.current;
@@ -185,11 +229,7 @@ export function Player() {
         </div>
 
         <div className="flex shrink-0 items-center gap-1 pr-0.5 sm:gap-1.5">
-          <IconButton
-            label="Previous"
-            disabled={!ready}
-            onClick={() => playerRef.current?.previousVideo()}
-          >
+          <IconButton label="Previous" disabled={!ready} onClick={handlePrev}>
             <PrevIcon />
           </IconButton>
           <button
@@ -205,11 +245,7 @@ export function Player() {
           >
             {playing ? <PauseIcon /> : <PlayIcon />}
           </button>
-          <IconButton
-            label="Next"
-            disabled={!ready}
-            onClick={() => playerRef.current?.nextVideo()}
-          >
+          <IconButton label="Next" disabled={!ready} onClick={handleNext}>
             <NextIcon />
           </IconButton>
         </div>

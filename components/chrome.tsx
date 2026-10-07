@@ -7,9 +7,14 @@ export function Chrome() {
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4 sm:p-6">
       <header className="pointer-events-auto flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <Clock />
-          <Presence />
+        <div className="flex flex-col gap-1.5">
+          <span className="font-text text-[20px] font-semibold leading-none tracking-[-0.01em] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] sm:text-[22px]">
+            दरबार
+          </span>
+          <div className="flex items-center gap-3">
+            <Clock />
+            <Presence />
+          </div>
         </div>
         <nav className="flex flex-col items-end gap-1.5 text-[12px] font-medium tracking-[-0.01em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] sm:text-[13px]">
           <OutLink href={site.spotifyUrl}>Spotify</OutLink>
@@ -19,6 +24,11 @@ export function Chrome() {
 
       <div className="pointer-events-auto w-full pb-[max(0.25rem,env(safe-area-inset-bottom))]">
         <Player />
+        <p className="mx-auto mt-2.5 max-w-[560px] text-center font-text text-[11px] italic leading-tight tracking-[-0.01em] text-white/55 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+          हर सुर, एक अनुभव
+          <span className="mx-1.5 not-italic text-white/30">·</span>
+          <span className="not-italic text-white/70">Designed by Anubhav</span>
+        </p>
       </div>
     </div>
   );

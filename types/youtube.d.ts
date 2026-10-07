@@ -27,6 +27,11 @@ declare global {
     interface Player {
       playVideo(): void;
       pauseVideo(): void;
+      mute(): void;
+      unMute(): void;
+      isMuted(): boolean;
+      setVolume(volume: number): void;
+      getVolume(): number;
       nextVideo(): void;
       previousVideo(): void;
       seekTo(seconds: number, allowSeekAhead: boolean): void;
@@ -36,6 +41,14 @@ declare global {
       getVideoUrl(): string;
       setLoop(loopPlaylists: boolean): void;
       setShuffle(shufflePlaylist: boolean): void;
+      loadPlaylist(options: {
+        list: string;
+        listType?: string;
+        index?: number;
+        startSeconds?: number;
+      }): void;
+      loadVideoById(videoId: string, startSeconds?: number): void;
+      getPlaylistIndex(): number;
       destroy(): void;
     }
   }
