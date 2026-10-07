@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-text: var(--font-noto);
+}
+
+html,
+body {
+  height: 100%;
+}
